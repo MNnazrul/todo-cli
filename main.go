@@ -45,11 +45,11 @@ func main() {
 
 		fmt.Println("Todo added successfully!")
 	
-		case "list":
-			err := ListTodos(collection)
-			if err != nil {
-				log.Fatalf("Falied to list todos: %v", err)
-			}
+	case "list":
+		err := ListTodos(collection)
+		if err != nil {
+			log.Fatalf("Falied to list todos: %v", err)
+		}
 
 	default:
 		fmt.Println("Unknown command:", command)
