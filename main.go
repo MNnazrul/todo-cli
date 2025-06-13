@@ -85,6 +85,21 @@ func main() {
 		}
 		fmt.Println("Todo deleted successfully")
 
+	case "mark":
+		if len(os.Args) < 4 {
+			fmt.Println("Usage: mark id ")
+		}
+		taskId, err := strconv.Atoi(os.Args[2])
+		if err != nil {
+			log.Fatalf("Failed to mark the todo: %v", err)
+		}
+		status := os.Args[3]
+		err = UpdateStatus(collection, taskId, status)
+		if err != nil {
+			log.Fatal("failed to delete todo")
+		}
+		fmt.Println("Update status successfull")
+
 	default:
 		fmt.Println("Unknown command:", command)
 		fmt.Println("Available commands: add")

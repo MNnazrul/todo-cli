@@ -17,7 +17,7 @@ type Todo struct {
 	ID          primitive.ObjectID `bson:"_id,omitempty"`        
 	Task        string             `bson:"task"`                 
 	Description string             `bson:"description"`          
-	Completed   bool               `bson:"completed"`            
+	Status      string             `bson:"status"`            
 	CreatedAt   time.Time          `bson:"created_at"`           
 	CompletedAt *time.Time         `bson:"completed_at,omitempty"`
 }
@@ -28,7 +28,7 @@ func AddTodo(collection *mongo.Collection, task string, description string) erro
 	todo := Todo {
 		Task: task,
 		Description: description,
-		Completed: false,
+		Status: "todo",
 		CreatedAt: time.Now(),
 	}
 	_, err := collection.InsertOne(ctx, todo)
@@ -81,6 +81,23 @@ func DeleteTodo(collection *mongo.Collection, todoID int) error {
 	return err
 }
 
+func UpdateStatus(collection *mongo.Collection, taskId int, status string) error {
+	id, err := getDocumentID(collection, taskId)
+	if err != nil {
+		return err 
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5 * time.Second) 
+	defer cancel()
+
+	filter := bson.M{"_id": id}
+	update := bson.M{"$set": bson.M{"Status": status}}
+
+	_, err = collection.UpdateOne(ctx, filter, update) 
+
+	return err
+}
+
 func UpdateTodo(collectoin *mongo.Collection, taskId int, des string) error {
 
 	id, err := getDocumentID(collectoin, taskId)
@@ -92,7 +109,7 @@ func UpdateTodo(collectoin *mongo.Collection, taskId int, des string) error {
 	defer cancel()
 
 	filter := bson.M{"_id": id}
-	update:= bson.M{"$set": bson.M{"description": des}}
+	update := bson.M{"$set": bson.M{"Description": des}}
 
 	_, err = collectoin.UpdateOne(ctx, filter, update)
 
@@ -135,9 +152,11 @@ func ListTodos(collection *mongo.Collection) error {
 			if err := cursor.Decode(&todo); err != nil {
 				return err 
 			}
-			status := "❌"
-			if todo.Completed {
+			status := "in-progress"
+			if todo.Status == "done" {
 				status = "✅"
+			} else if todo.Status == "todo" {
+				status = "❌"		
 			}
 			fmt.Println(todo.CreatedAt)
 			t.AppendRow(table.Row{todo.Task, status, todo.Description, todo.CreatedAt.Local().Format("Jan 02, 2006,\n 03:04:05 PM")})
@@ -152,8 +171,6 @@ func ListTodos(collection *mongo.Collection) error {
 		fmt.Println()
 
 	}
-
-	
 
 	return nil
 }
