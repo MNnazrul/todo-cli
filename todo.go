@@ -10,6 +10,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 type Todo struct {
@@ -34,6 +35,45 @@ func AddTodo(collection *mongo.Collection, task string, description string) erro
 	return err 
 }
 
+func getDocumentID(collection *mongo.Collection, todoID int) (primitive.ObjectID, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	opts := options.Find().SetSkip(int64(todoID) - 1).SetLimit(1)
+	cursor, err := collection.Find(ctx, bson.M{}, opts) 
+	if err != nil {
+		return primitive.NilObjectID, err 
+	}
+	defer cursor.Close(ctx)
+
+	var todo Todo 
+	if cursor.Next(ctx) {
+		if err := cursor.Decode(&todo); err != nil {
+			return primitive.NilObjectID, err 
+		}
+		return todo.ID, nil 
+	}
+	return primitive.NilObjectID, fmt.Errorf("no second document found")
+}
+
+func UpdateTodo(collectoin *mongo.Collection, taskId int, des string) error {
+
+	id, err := getDocumentID(collectoin, taskId)
+	if err != nil {
+		return err 
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5 * time.Second)
+	defer cancel()
+
+	filter := bson.M{"_id": id}
+	update:= bson.M{"$set": bson.M{"description": des}}
+
+	_, err = collectoin.UpdateOne(ctx, filter, update)
+
+	return err
+}
+
 func ListTodos(collection *mongo.Collection) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
@@ -45,27 +85,26 @@ func ListTodos(collection *mongo.Collection) error {
 	defer cursor.Close(ctx)
 
 	styles := []table.Style {
-		table.StyleDefault,
+		// table.StyleDefault,
 		table.StyleLight,
-		table.StyleColoredDark,
-		table.StyleColoredBlueWhiteOnBlack,
+		// table.StyleColoredDark,
+		// table.StyleColoredBlueWhiteOnBlack,
 	}
 
 	t := table.NewWriter()
 	t.SetColumnConfigs([]table.ColumnConfig{
 		{Number: 1, Align: text.AlignCenter}, // Index
-    {Number: 2, Align: text.AlignCenter}, // Task
-    {Number: 3, Align: text.AlignCenter}, // Status
-    {Number: 4, Align: text.AlignCenter}, // Description
+		{Number: 2, Align: text.AlignCenter}, // Task
+		{Number: 3, Align: text.AlignCenter}, // Status
+		{Number: 4, Align: text.AlignCenter}, // Description
 	})
 	
 	t.SetCaption("Todo List")
 
-	t.AppendHeader(table.Row{"#", "Task", "status", "Description", "Created At"})
+	t.AppendHeader(table.Row{"Task", "status", "Description", "Created At"})
 	t.SetTitle("title")
 
 	for _, style := range styles {
-		idx := 1
 		for cursor.Next(ctx) {
 			var todo Todo 
 			if err := cursor.Decode(&todo); err != nil {
@@ -76,8 +115,7 @@ func ListTodos(collection *mongo.Collection) error {
 				status = "✅"
 			}
 			fmt.Println(todo.CreatedAt)
-			t.AppendRow(table.Row{idx, todo.Task, status, todo.Description, todo.CreatedAt.Local().Format("Jan 02, 2006,\n 03:04:05 PM")})
-			idx++
+			t.AppendRow(table.Row{todo.Task, status, todo.Description, todo.CreatedAt.Local().Format("Jan 02, 2006,\n 03:04:05 PM")})
 		}
 		
 		t.SetAutoIndex(true)

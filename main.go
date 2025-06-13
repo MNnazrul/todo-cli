@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strconv"
 	"strings"
 )
 
@@ -51,11 +52,26 @@ func main() {
 			log.Fatalf("Falied to list todos: %v", err)
 		}
 
+	case "update":
+		if len(os.Args) < 4 {
+			fmt.Println("Usage: update \"id\" \"description\" ")
+			return
+		}
+		taskId, err := strconv.Atoi(os.Args[2])
+		des := os.Args[3]
+		if err != nil {
+			log.Fatalf("Error: %v", err)
+		}
+		
+		err = UpdateTodo(collection, taskId, des)
+		if err != nil {
+			log.Fatalf("Error %v", err)
+		}
+
+		fmt.Println("Todo update successfully")
+
 	default:
 		fmt.Println("Unknown command:", command)
 		fmt.Println("Available commands: add")
 	}
-	
-
-
 }
