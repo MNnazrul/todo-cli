@@ -70,6 +70,21 @@ func main() {
 
 		fmt.Println("Todo update successfully")
 
+	case "delete":
+		if len(os.Args) < 3 {
+			fmt.Println("Usage: delete \"id\"")
+			return
+		}
+		taskId, err := strconv.Atoi(os.Args[2])
+		if err != nil {
+			log.Fatalf("Failed to delete todo: %v", err)
+		}
+		err = DeleteTodo(collection, taskId)
+		if err != nil {
+			log.Fatalf("Error %v", err)
+		}
+		fmt.Println("Todo deleted successfully")
+
 	default:
 		fmt.Println("Unknown command:", command)
 		fmt.Println("Available commands: add")

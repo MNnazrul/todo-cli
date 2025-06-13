@@ -39,6 +39,17 @@ func getDocumentID(collection *mongo.Collection, todoID int) (primitive.ObjectID
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
+	total, err := collection.CountDocuments(ctx, bson.M{})
+	if err != nil {
+		return primitive.NilObjectID, err 
+	}
+	if total == 0 {
+		return primitive.NilObjectID, fmt.Errorf("there are no todos available")
+	}
+	if todoID > int(total) || todoID <= 0 {
+		return primitive.NilObjectID, fmt.Errorf("invalid todoID: must be between 1 and %d", total)
+	}
+
 	opts := options.Find().SetSkip(int64(todoID) - 1).SetLimit(1)
 	cursor, err := collection.Find(ctx, bson.M{}, opts) 
 	if err != nil {
@@ -54,6 +65,20 @@ func getDocumentID(collection *mongo.Collection, todoID int) (primitive.ObjectID
 		return todo.ID, nil 
 	}
 	return primitive.NilObjectID, fmt.Errorf("no second document found")
+}
+
+func DeleteTodo(collection *mongo.Collection, todoID int) error {
+
+	id, err := getDocumentID(collection, todoID)
+	if err != nil {
+		return err 
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 5 * time.Second) 
+	defer cancel() 
+
+	_, err = collection.DeleteOne(ctx, bson.M{"_id": id})
+
+	return err
 }
 
 func UpdateTodo(collectoin *mongo.Collection, taskId int, des string) error {
