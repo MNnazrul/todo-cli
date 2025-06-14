@@ -89,19 +89,9 @@ Each task has a `status` field that can be one of the following:
 
 ---
 
-Contribution:
+### Credits
 
-You are welcome to fork and enhance the CLI by adding:
-
-- `update-status` command
-- `delete` command
-- Filtering or sorting options
-
----
-
-License:
-
-MIT License — feel free to use and modify.
+Project idea inspired by: [Task Tracker - roadmap.sh](https://roadmap.sh/projects/task-tracker)
 
 ---
 
