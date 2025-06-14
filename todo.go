@@ -109,23 +109,14 @@ func UpdateTodo(collectoin *mongo.Collection, taskId int, des string) error {
 	defer cancel()
 
 	filter := bson.M{"_id": id}
-	update := bson.M{"$set": bson.M{"Description": des}}
+	update := bson.M{"$set": bson.M{"description": des}}
 
 	_, err = collectoin.UpdateOne(ctx, filter, update)
 
 	return err
 }
 
-func ListTodos(collection *mongo.Collection) error {
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-
-	cursor, err := collection.Find(ctx, bson.M{})
-	if err != nil {
-		return err 	
-	}
-	defer cursor.Close(ctx)
-
+func disPlay(cursor *mongo.Cursor, ctx context.Context) error {
 	styles := []table.Style {
 		// table.StyleDefault,
 		table.StyleLight,
@@ -173,4 +164,30 @@ func ListTodos(collection *mongo.Collection) error {
 	}
 
 	return nil
+}
+
+func ListTodos(collection *mongo.Collection) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	cursor, err := collection.Find(ctx, bson.M{})
+	if err != nil {
+		return err 	
+	}
+	defer cursor.Close(ctx)
+
+	return disPlay(cursor, ctx)
+}
+
+func ListTodosOfStatus(collection *mongo.Collection, status string) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 5 * time.Second)
+	defer cancel()
+
+	cursor, err := collection.Find(ctx, bson.M{"status": status})
+	if err != nil {
+		return err 
+	}
+	defer cursor.Close(ctx)
+
+	return disPlay(cursor, ctx)
 }

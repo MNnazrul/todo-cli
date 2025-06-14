@@ -47,9 +47,17 @@ func main() {
 		fmt.Println("Todo added successfully!")
 	
 	case "list":
-		err := ListTodos(collection)
-		if err != nil {
-			log.Fatalf("Falied to list todos: %v", err)
+		if len(os.Args) == 2 {
+			err := ListTodos(collection)
+			if err != nil {
+				log.Fatalf("Falied to list todos: %v", err)
+			}
+		} else if len(os.Args) == 3 {
+			status := os.Args[2]
+			err := ListTodosOfStatus(collection, status)
+			if err != nil {
+				log.Fatalf("Error: %v", err)
+			}
 		}
 
 	case "update":
